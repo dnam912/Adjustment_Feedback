@@ -1,0 +1,9 @@
+file_name,session_date,session_id,event_order,gain_L,gain_M,gain_H,pain,dull
+Lecture(Haptics)_1.wav,2026-02-24,S001,1,5,5,5,0,1
+Lecture(Haptics)_2.wav,2026-02-24,S001,2,4,4,4,2,0
+Lecture(Haptics)_2.wav,2026-02-24,S001,3,4,3,4,0,0
+Lecture(Haptics)_3.wav,2026-02-24,S001,4,4,3,4,2,0
+Lecture(Haptics)_3.wav,2026-02-24,S001,5,2,3,3,1,0
+Lecture(Haptics)_3.wav,2026-02-24,S001,6,1,2,2,0,0
+WorshipServices(preach).wav,2026-02-22,S002,1,2,2,2,2,0
+WorshipServices(preach).wav,2026-02-22,S002,2,1,1,1,0,1
