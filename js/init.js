@@ -45,7 +45,8 @@ export function init() {
         It means taking the canvas created by three.js and insert it into the webpage
         Instead of <canvas></canvas>
     */
-    document.body.appendChild(renderer.domElement);
+    //document.body.appendChild(renderer.domElement);
+    document.getElementById('graph-page').appendChild(renderer.domElement);
 
     window.addEventListener('resize', resize);
     //buildAudiogramView('L');

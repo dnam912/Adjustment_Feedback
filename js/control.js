@@ -49,37 +49,37 @@ export function setupControls({
     // Layout
     // =========================
     function placeControls() {
-    const ticks = document.querySelectorAll('.x-tick');
+        const ticks = document.querySelectorAll('.x-tick');
 
-    if (!ticks.length) {
-        return;
+        if (!ticks.length) {
+            return;
+        }
+
+        let maxBottom = 0;
+
+        ticks.forEach(tick => {
+            const rect = tick.getBoundingClientRect();
+
+            if (rect.bottom > maxBottom) {
+                maxBottom = rect.bottom;
+            }
+        });
+
+        const baseTop = window.scrollY + maxBottom + 16;
+        const rowGap = 56;
+
+        earControls.style.top = baseTop + 'px';
+        //controls.style.top = (baseTop + rowGap) + 'px';
+        //wavControls.style.top = (baseTop + rowGap * 2) + 'px';
+
+        if (currentVisibleMode === 'wav') {
+                wavControls.style.top = (baseTop + rowGap) + 'px';
+                //controls.style.top = (baseTop + rowGap * 2) + 'px';
+            } else {
+                //controls.style.top = (baseTop + rowGap) + 'px';
+                wavControls.style.top = (baseTop + rowGap * 2) + 'px';
+            }
     }
-
-    let maxBottom = 0;
-
-    ticks.forEach(tick => {
-        const rect = tick.getBoundingClientRect();
-
-        if (rect.bottom > maxBottom) {
-            maxBottom = rect.bottom;
-        }
-    });
-
-    const baseTop = window.scrollY + maxBottom + 16;
-    const rowGap = 56;
-
-    earControls.style.top = baseTop + 'px';
-    controls.style.top = (baseTop + rowGap) + 'px';
-    wavControls.style.top = (baseTop + rowGap * 2) + 'px';
-
-    if (currentVisibleMode === 'wav') {
-            wavControls.style.top = (baseTop + rowGap) + 'px';
-            controls.style.top = (baseTop + rowGap * 2) + 'px';
-        } else {
-            controls.style.top = (baseTop + rowGap) + 'px';
-            wavControls.style.top = (baseTop + rowGap * 2) + 'px';
-        }
-}
 
     // =========================
     // Active states
@@ -118,6 +118,9 @@ export function setupControls({
         wavFileName.style.display = showWav ? '' : 'none';
         wavTime.style.display = showWav ? '' : 'none';
 
+        earControls.style.display = mode === 'integration' ? 'none' : '';
+        wavControls.style.display = mode === 'integration' ? 'none' : '';
+
         btnLeft.classList.toggle('locked', showWav);
         btnRight.classList.toggle('locked', showWav);
         btnBoth.classList.toggle('locked', showWav);
@@ -135,11 +138,13 @@ export function setupControls({
         setModeControlsVisible(mode);
         onModeChange(mode);
 
-        requestAnimationFrame(placeControls);
+        if (mode !== 'integration') {
+            requestAnimationFrame(placeControls);
+        }
     }
 
     function handleEarClick(ear) {
-        if (currentVisibleMode === 'wav') {
+        if (currentVisibleMode === 'wav' || currentVisibleMode === 'integration') {
             return;
         }
         
@@ -216,6 +221,8 @@ export function setupControls({
     requestAnimationFrame(placeControls);
 
     window.addEventListener('resize', () => {
-        requestAnimationFrame(placeControls);
+        if (currentVisibleMode !== 'integration') {
+            requestAnimationFrame(placeControls);
+        }
     });
 }

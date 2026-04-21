@@ -84,8 +84,30 @@ function renderMode(mode) {
     /*
         IMPLEMENTATION
     */
+   currentMode = mode;
 
-    currentMode = mode;
+    const graphPage = document.getElementById('graph-page');
+    const integrationPanel = document.getElementById('integration-panel');
+    const legend = document.getElementById('legend');
+    const featurePanel = document.getElementById('feature-panel');
+    const axisLabels = document.getElementById('axis-labels');
+
+    if (mode === 'integration') {
+        graphPage.style.display = 'none';
+        integrationPanel.style.display = 'block';
+        legend.style.display = 'none';
+        renderer.domElement.style.display = 'none';
+
+        if (featurePanel) featurePanel.style.display = 'none';
+        if (axisLabels) axisLabels.innerHTML = '';
+        return;
+    }
+
+    integrationPanel.style.display = 'none';
+    graphPage.style.display = '';
+    legend.style.display = '';
+    renderer.domElement.style.display = '';
+
     refreshView();
 }
 
@@ -157,6 +179,29 @@ function handleWavStop() {
     updateWavAlert(null);
 }
 
+function updateFeaturePanel(feature) {
+    const panel = document.getElementById('feature-panel');
+    if (!panel) return;
+
+    if (!feature || currentMode === 'integration') {
+        panel.style.display = 'none';
+        return;
+    }
+
+    const show = currentMode === 'realtime' || currentMode === 'wav';
+    panel.style.display = show ? 'block' : 'none';
+
+    if (!show) return;
+
+    document.getElementById('feat-rms').textContent = feature.rms.toFixed(6);
+    document.getElementById('feat-centroid').textContent = feature.centroid.toFixed(2);
+    document.getElementById('feat-zcr').textContent = feature.zcr.toFixed(6);
+    document.getElementById('feat-rolloff').textContent = feature.rolloff.toFixed(2);
+    document.getElementById('feat-low').textContent = feature.band_low.toFixed(6);
+    document.getElementById('feat-mid').textContent = feature.band_mid.toFixed(6);
+    document.getElementById('feat-high').textContent = feature.band_high.toFixed(6);
+}
+
 // =========================
 // Init
 // =========================
@@ -184,18 +229,21 @@ window.addEventListener('resize', () => {
 // =========================
 let lastMatchTime = 0;
 const MATCH_INTERVAL_MS = 100;
+const MATCH_API_URL = '/api/match';
 
 async function requestMatch(feature, fileName) {
-    const res = await fetch("http://127.0.0.1:5050/match", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+    const res = await fetch(MATCH_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             feature: feature,
             file_name: fileName
         })
     });
+
+    if (!res.ok) {
+        throw new Error(`Match request failed: ${res.status}`);
+    }
 
     return await res.json();
 }
@@ -287,25 +335,28 @@ function animateAudio() {
 
     if (isAudioMode(currentMode)) {
         updateAudioLine(scene, currentMode);
-    }
 
-    if (isWavMode(currentMode)) {
-        updateWavDisplay();
+        const feature = getCurrentAudioFeature();
+        updateFeaturePanel(feature);
 
-        const now = performance.now();
+        if (isWavMode(currentMode)) {
+            updateWavDisplay();
 
-        if (now - lastMatchTime >= MATCH_INTERVAL_MS) {
-            lastMatchTime = now;
+            const now = performance.now();
 
-            const feature = getCurrentAudioFeature();
-            const wavInfo = getWavInfo();
+            if (now - lastMatchTime >= MATCH_INTERVAL_MS) {
+                lastMatchTime = now;
 
-            if (feature && wavInfo.fileName && wavInfo.isPlaying) {
-                processFeatureMatch(feature, wavInfo.fileName);
+                const wavInfo = getWavInfo();
+
+                if (feature && wavInfo.fileName && wavInfo.isPlaying) {
+                    processFeatureMatch(feature, wavInfo.fileName);
+                }
             }
         }
     } else {
         updateWavAlert(null);
+        updateFeaturePanel(null);
     }
 }
 
