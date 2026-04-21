@@ -49,8 +49,6 @@ export function init() {
     document.getElementById('graph-page').appendChild(renderer.domElement);
 
     window.addEventListener('resize', resize);
-    //buildAudiogramView('L');
-    //updateAxisLabels();
     animate();
 
     return { scene, camera, renderer }; // To return objects to main.js

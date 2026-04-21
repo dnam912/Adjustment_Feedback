@@ -221,7 +221,7 @@ export function mapWavLevel(level, minLevel = -100, maxLevel = 0) {
 // =========================
 // Axis labels
 // =========================
-function screenX(graphX, renderer) {
+/*function screenX(graphX, renderer) {
     const rect = renderer.domElement.getBoundingClientRect();
     const aspect = rect.width / rect.height;
 
@@ -234,6 +234,26 @@ function screenY(graphY, renderer) {
 
     return window.scrollY + rect.top
         + (125 - graphY) / 250 * rect.height;
+}*/
+
+function screenX(graphX, renderer) {
+    const canvasRect = renderer.domElement.getBoundingClientRect();
+    const container = document.getElementById('axis-labels');
+    const containerRect = container.getBoundingClientRect();
+
+    const aspect = canvasRect.width / canvasRect.height;
+
+    return (canvasRect.left - containerRect.left)
+        + (graphX + 125 * aspect) / (250 * aspect) * canvasRect.width;
+}
+
+function screenY(graphY, renderer) {
+    const canvasRect = renderer.domElement.getBoundingClientRect();
+    const container = document.getElementById('axis-labels');
+    const containerRect = container.getBoundingClientRect();
+
+    return (canvasRect.top - containerRect.top)
+        + (125 - graphY) / 250 * canvasRect.height;
 }
 
 export function updateAxisLabels(renderer, mode = 'audiogram') {
@@ -246,17 +266,25 @@ export function updateAxisLabels(renderer, mode = 'audiogram') {
     container.innerHTML = '';
 
     const isAudiogram = mode === 'audiogram';
-    const dbMin = isAudiogram ? -10 : 50;
-    const dbMax = isAudiogram ? 120 : 135;
-    const unit = isAudiogram ? ' dB HL' : ' dB SPL';
-    const mapY = isAudiogram ? mapHL : mapSPL;
+    const isWav = mode === 'wav';
+
+    const dbMin = isAudiogram ? -10 : (isWav ? -100 : 50)
+    const dbMax = isAudiogram ? 120 : (isWav ? 0 : 135);
+
+    const unit = isAudiogram
+                ? ' dB HL'
+                : (isWav ? 'dBFS' : ' dB SPL');
+    const mapY = isAudiogram
+                ? mapHL
+                : (isWav ? mapWavLevel : mapSPL);
+
     const freqTicks = getFreqTicks(mode);
 
     const axisBottom = screenY(GRAPH_Y_MIN, renderer);
 
     for (let db = dbMin; db <= dbMax; db += 10) {
         const y = screenY(mapY(db), renderer);
-        const ref = (!isAudiogram && splRefs[db]) ? ' — ' + splRefs[db] : '';
+        const ref = (!isAudiogram && !isWav && splRefs[db]) ? ' — ' + splRefs[db] : '';
 
         const el = document.createElement('div');
         el.className = 'axis-tick y-tick';
@@ -283,7 +311,7 @@ export function updateAxisLabels(renderer, mode = 'audiogram') {
         el.className = 'axis-tick x-tick';
         el.textContent = freq >= 1000 ? (freq / 1000) + 'k' : freq;
         el.style.left = x + 'px';
-        el.style.top = (axisBottom + 8) + 'px';
+        el.style.top = (axisBottom + 10) + 'px'; // Numbers of the freq
 
         container.appendChild(el);
     });

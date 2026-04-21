@@ -9,16 +9,17 @@ body {
   font-family: 'Courier New', monospace; 
   overflow-x: hidden;
   overflow-y: auto;
-  /*min-height: 120vh;*/
+
+  padding-top: 80px;
+  padding-bottom: 50px;
 }
 
 h1 {
   position: fixed;
   top: 16px;
   left: 20px;
-  z-index: 10;
+  z-index: 60;
   font-size: 20px;
-  font-weight: normal;
   margin: 0;
 }
 
@@ -31,7 +32,6 @@ h1 {
   pointer-events: none;
   z-index: 5;
 }
-
 .axis-tick {
   position: absolute;
   color: #222;
@@ -39,24 +39,13 @@ h1 {
   font-size: 11px;
   white-space: nowrap;
 }
-
+.x-tick {
+  transform: translateX(-50%);
+}
 .y-tick {
   transform: translateY(-50%);
 }
 
-.x-tick {
-  transform: translateX(-50%);
-}
-
-
-#btn-panel > div {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  z-index: 20;
-}
 
 #btn-panel button,
 #controls button {
@@ -94,15 +83,33 @@ h1 {
 
 #controls {
   position: fixed;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
+  top: 8%;
+  left: 20px;
   display: flex;
   gap: 10px;
   z-index: 50;
 }
 
-/* +) Feature Panel */
+
+#integration-panel {
+  width: 100%;
+  min-height: 100vh;
+  padding-top: 5%;
+  box-sizing: border-box;
+}
+#integration-frame {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 100px);
+  border: none;
+}
+
+#graph-page {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+}
+
 #feature-panel {
   position: fixed;
   left: 16px;
@@ -114,28 +121,30 @@ h1 {
   z-index: 30;
 }
 
-#integration-panel {
-  width: 100%;
-  height: calc(100vh - 100px);
-  padding-bottom: 80px;
-}
-
-#graph-page {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-}
-
 #btn-panel {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
 }
-
+#btn-panel > div {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 20;
+  
+  pointer-events: auto;
+}
 
 /* LEGEND */
 #legend {
   position: fixed;
-  top: 60px;
+  top: 10%;
   right: 16px;
   background: rgba(255,255,255,0.92);
   border: 1px solid #e0e0e0;
@@ -146,20 +155,17 @@ h1 {
   pointer-events: none;
   z-index: 10;
 }
-
 .leg-item {
   display: flex;
   align-items: center;
   gap: 8px;
   color: #333;
 }
-
 .leg-swatch {
   width: 24px;
   height: 2px;
   display: inline-block;
 }
-
 .leg-swatch.dashed {
   background: repeating-linear-gradient(
     90deg,

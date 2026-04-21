@@ -112,7 +112,7 @@ export function renderGraph({ scene, renderer, mode, ear = 'L' }) {
 
     if (mode === 'wav') {
         buildWavView(scene);
-        updateAxisLabels(renderer, 'realtime');
+        updateAxisLabels(renderer, 'wav');
         return;
     }
 

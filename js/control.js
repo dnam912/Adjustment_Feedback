@@ -10,7 +10,7 @@ export function setupControls({
     onWavStop
 }) {
     const earControls = document.getElementById('ear-controls');
-    const controls = document.getElementById('controls');
+    //const controls = document.getElementById('controls');
     const wavControls = document.getElementById('wav-controls');
 
     const btnLeft = document.getElementById('btnLeft');
@@ -50,10 +50,13 @@ export function setupControls({
     // =========================
     function placeControls() {
         const ticks = document.querySelectorAll('.x-tick');
+        const graphPage = document.getElementById('graph-page');
 
         if (!ticks.length) {
             return;
         }
+
+        const graphRect = graphPage.getBoundingClientRect();
 
         let maxBottom = 0;
 
@@ -65,20 +68,12 @@ export function setupControls({
             }
         });
 
-        const baseTop = window.scrollY + maxBottom + 16;
-        const rowGap = 56;
+        //const baseTop = window.scrollY + maxBottom + 8;
+        const baseTop = (maxBottom - graphRect.top) + 40;
+        const rowGap = 60;
 
         earControls.style.top = baseTop + 'px';
-        //controls.style.top = (baseTop + rowGap) + 'px';
-        //wavControls.style.top = (baseTop + rowGap * 2) + 'px';
-
-        if (currentVisibleMode === 'wav') {
-                wavControls.style.top = (baseTop + rowGap) + 'px';
-                //controls.style.top = (baseTop + rowGap * 2) + 'px';
-            } else {
-                //controls.style.top = (baseTop + rowGap) + 'px';
-                wavControls.style.top = (baseTop + rowGap * 2) + 'px';
-            }
+        wavControls.style.top = (baseTop + rowGap) + 'px';
     }
 
     // =========================
