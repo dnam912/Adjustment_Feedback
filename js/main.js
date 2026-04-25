@@ -1,47 +1,42 @@
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
-
 import { init } from './init.js';
-import { setupControls } from './control.js';
 import { renderGraph } from './graph.js';
-import { initMicrophone, stopMicrophone,
-        ensureMicLine, updateAudioLine, hideMicLine,
-        loadWavFile, playWavFile, stopWavFile, getWavInfo,
+import { setupControls } from './control.js';
+import { ensureMicLine, updateAudioLine, hideMicLine,
         getCurrentAudioFeature } from './audioEngine.js';
+import { initMicrophone, stopMicrophone } from './micEngine.js';
+import { loadWavFile, playWavFile, stopWavFile, getWavInfo } from './wavEngine.js';
+import { computeLiveWavScore, updateWavAlert } from './wavAlert.js';
+import { initHapticOutput } from './hapticEngine.js';
+import { updateLegend, updateWavDisplay, updateFeaturePanel } from './interface.js';
 
-const { scene, renderer } = init();
 
+// =========================
+// Variables
+// =========================
 let currentMode = 'audiogram';
 let currentEar = 'both';
-let micStarted = false;
 let micEnabled = false;
+
+const graphPage = document.getElementById('graph-page');
+const integrationPanel = document.getElementById('integration-panel');
+const legend = document.getElementById('legend');
+const featurePanel = document.getElementById('feature-panel');
+const axisLabels = document.getElementById('axis-labels');
+
+const { scene, renderer } = init();
 
 
 function isAudioMode(mode) {
     return mode === 'realtime' || mode === 'wav';
 }
-
-function isWavMode(mode) {
+function isWavMode(mode) { // Wav Player
     return mode === 'wav';
 }
 
+
 // =========================
-// UI updates
+// Update UI
 // =========================
-function updateLegend() {
-    const audiogramLegend = document.getElementById('leg-audiogram');
-    const realtimeLegend = document.getElementById('leg-realtime');
-
-    if (!audiogramLegend || !realtimeLegend) {
-        return;
-    }
-
-    const showAudiogram = currentMode === 'audiogram';
-    const showRealtimeLegend = isAudioMode(currentMode);
-
-    audiogramLegend.style.display = showAudiogram ? '' : 'none';
-    realtimeLegend.style.display = showRealtimeLegend ? '' : 'none';
-}
-
 function updateAudioVisibility() {
     if (isAudioMode(currentMode)) {
         ensureMicLine(scene);
@@ -50,47 +45,31 @@ function updateAudioVisibility() {
     }
 }
 
-function updateWavDisplay() {
-    const wavFileName = document.getElementById('wavFileName');
-    const wavTime = document.getElementById('wavTime');
-    const wavInfo = getWavInfo();
-
-    if (!wavFileName || !wavTime) {
-        return;
-    }
-
-    wavFileName.textContent = wavInfo.fileName ? wavInfo.fileName : 'No file';
-    wavTime.textContent =
-        wavInfo.currentTime.toFixed(2) + ' / ' + wavInfo.duration.toFixed(2);
-}
-
 function refreshView() {
     renderGraph({
-        scene: scene,
-        renderer: renderer,
+        scene,
+        renderer,
         mode: currentMode,
         ear: currentEar
     });
 
     updateAudioVisibility();
-    updateLegend();
-    updateWavDisplay();
+    updateLegend(currentMode, isAudioMode);
+    updateWavDisplay(getWavInfo);
 }
+
 
 // =========================
 // Mode / Ear
 // =========================
 function renderMode(mode) {
-    /*
-        IMPLEMENTATION
-    */
-   currentMode = mode;
+    currentMode = mode;
 
-    const graphPage = document.getElementById('graph-page');
-    const integrationPanel = document.getElementById('integration-panel');
-    const legend = document.getElementById('legend');
-    const featurePanel = document.getElementById('feature-panel');
-    const axisLabels = document.getElementById('axis-labels');
+    if (mode !== 'realtime') {
+        stopMicrophone();
+        hideMicLine();
+        micEnabled = false;
+    }
 
     if (mode === 'integration') {
         graphPage.style.display = 'none';
@@ -116,22 +95,22 @@ function renderEar(ear) {
     refreshView();
 }
 
+
 // =========================
-// Mic toggle
+// Mic
 // =========================
 async function handleMicToggle() {
     if (!micEnabled) {
         await initMicrophone();
-        micStarted = true;
         micEnabled = true;
         return true;
     }
 
     stopMicrophone();
-    micStarted = false;
     micEnabled = false;
     return false;
 }
+
 
 // =========================
 // WAV
@@ -144,16 +123,15 @@ async function handleWavLoad(event) {
     }
 
     const file = event.target.files[0];
-
     if (!file) {
         return;
     }
 
     await loadWavFile(file);
 
-    updateWavAlert(null);
     currentMode = 'wav';
     refreshView();
+    updateWavAlert(currentMode, null);
 }
 
 async function handleWavPlay() {
@@ -175,38 +153,19 @@ async function handleWavPlay() {
 
 function handleWavStop() {
     stopWavFile();
-    updateWavDisplay();
-    updateWavAlert(null);
+
+    currentMode = 'wav';
+
+    updateWavDisplay(getWavInfo);
+    refreshView();
+    updateWavAlert(currentMode, null);
 }
 
-function updateFeaturePanel(feature) {
-    const panel = document.getElementById('feature-panel');
-    if (!panel) return;
-
-    if (!feature || currentMode === 'integration') {
-        panel.style.display = 'none';
-        return;
-    }
-
-    const show = currentMode === 'realtime' || currentMode === 'wav';
-    panel.style.display = show ? 'block' : 'none';
-
-    if (!show) return;
-
-    document.getElementById('feat-rms').textContent = feature.rms.toFixed(6);
-    document.getElementById('feat-centroid').textContent = feature.centroid.toFixed(2);
-    document.getElementById('feat-zcr').textContent = feature.zcr.toFixed(6);
-    document.getElementById('feat-rolloff').textContent = feature.rolloff.toFixed(2);
-    document.getElementById('feat-low').textContent = feature.band_low.toFixed(6);
-    document.getElementById('feat-mid').textContent = feature.band_mid.toFixed(6);
-    document.getElementById('feat-high').textContent = feature.band_high.toFixed(6);
-}
 
 // =========================
 // Init
 // =========================
 refreshView();
-
 setupControls({
     initialMode: currentMode,
     initialEar: currentEar,
@@ -218,113 +177,10 @@ setupControls({
     onWavPlay: handleWavPlay,
     onWavStop: handleWavStop
 });
-
 window.addEventListener('resize', () => {
     refreshView();
 });
-
-
-// =========================
-// Woojer Belt
-// =========================
-let lastMatchTime = 0;
-const MATCH_INTERVAL_MS = 100;
-const MATCH_API_URL = '/api/match';
-
-async function requestMatch(feature, fileName) {
-    const res = await fetch(MATCH_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            feature: feature,
-            file_name: fileName
-        })
-    });
-
-    if (!res.ok) {
-        throw new Error(`Match request failed: ${res.status}`);
-    }
-
-    return await res.json();
-}
-
-function updateWavAlert(result) {
-    const wavAlert = document.getElementById('wavAlert');
-
-    if (!wavAlert) {
-        return;
-    }
-
-    if (currentMode !== 'wav') {
-        wavAlert.style.display = 'none';
-        return;
-    }
-
-    wavAlert.style.display = '';
-
-    if (!result || result.alert_level === 'none') {
-        wavAlert.textContent = 'No alert';
-        wavAlert.style.color = '#333';
-        return;
-    }
-
-    if (result.alert_level === 'warning') {
-        wavAlert.textContent = 'Warning';
-        wavAlert.style.color = '#b26a00';
-        return;
-    }
-
-    if (result.alert_level === 'danger') {
-        wavAlert.textContent = 'Danger';
-        wavAlert.style.color = '#b00020';
-    }
-}
-
-function sendWoojerAlert(alertLevel, result) {
-    if (alertLevel === 'none') {
-        return;
-    }
-
-    console.log('alertLevel:', alertLevel, 'score:', result.danger_score);
-
-    if (!window.woojerBridge) {
-        console.log('woojerBridge missing');
-        return;
-    }
-
-    console.log('sending to woojer');
-
-    if (alertLevel === 'warning') {
-        window.woojerBridge.send({
-            pattern: 'warning',
-            intensity: 0.55,
-            durationMs: 250,
-            score: result.danger_score
-        });
-        return;
-    }
-
-    if (alertLevel === 'danger') {
-        window.woojerBridge.send({
-            pattern: 'danger',
-            intensity: 0.95,
-            durationMs: 450,
-            score: result.danger_score
-        });
-    }
-}
-
-async function processFeatureMatch(feature, fileName) {
-    const result = await requestMatch(feature, fileName);
-
-    if (!result) {
-        updateWavAlert(null);
-        return;
-    }
-
-    updateWavAlert(result);
-    sendWoojerAlert(result.alert_level, result);
-}
+initHapticOutput();
 
 
 // =========================
@@ -333,48 +189,33 @@ async function processFeatureMatch(feature, fileName) {
 function animateAudio() {
     requestAnimationFrame(animateAudio);
 
+    let feature = null;
+
     if (isAudioMode(currentMode)) {
         updateAudioLine(scene, currentMode);
 
-        const feature = getCurrentAudioFeature();
-        updateFeaturePanel(feature);
-
-        if (isWavMode(currentMode)) {
-            updateWavDisplay();
-
-            const now = performance.now();
-
-            if (now - lastMatchTime >= MATCH_INTERVAL_MS) {
-                lastMatchTime = now;
-
-                const wavInfo = getWavInfo();
-
-                if (feature && wavInfo.fileName && wavInfo.isPlaying) {
-                    processFeatureMatch(feature, wavInfo.fileName);
-                }
-            }
-        }
+        feature = getCurrentAudioFeature();
+        updateFeaturePanel(currentMode, feature);
     } else {
-        updateWavAlert(null);
-        updateFeaturePanel(null);
+        updateWavAlert(currentMode, null);
+        updateFeaturePanel(currentMode, null);
+    }
+
+    if (isWavMode(currentMode)) {
+        updateWavDisplay(getWavInfo);
+
+        const wavInfo = getWavInfo();
+
+        if (wavInfo.isPlaying) {
+            const score = computeLiveWavScore(feature);
+
+            console.log('feature:', feature);
+            console.log('score:', score);
+
+            updateWavAlert(currentMode, { score: score });
+        } else {
+            updateWavAlert(currentMode, null);
+        }
     }
 }
-
 animateAudio();
-
-
-/*
-createGrid(scene, 0, 120, 10, mapHL)
-updateAxisLabels(renderer, 'audiogram');
-
-window.addEventListener('resize', () => {
-    updateAxisLabels(renderer, 'audiogram');
-});
-
-// Test drawing a line
-//const axes = new THREE.AxesHelper(50);
-//scene.add(axes);
-const material = new THREE.LineBasicMaterial({ color: 0x000000 });
-const line = createLine([[-100,0], [100,0]], material);
-scene.add(line);
-console.log(scene.children);*/

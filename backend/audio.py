@@ -1,6 +1,7 @@
 import librosa
 import numpy as np
 import soundfile as sf
+from variables import *
 
 
 def extract_features_from_chunk(y, sr):
@@ -19,9 +20,9 @@ def extract_features_from_chunk(y, sr):
     stft = np.abs(librosa.stft(y))
     freqs = librosa.fft_frequencies(sr=sr)
 
-    low_mask = (freqs >= 125) & (freqs < 500)
-    mid_mask = (freqs >= 500) & (freqs < 3000)
-    high_mask = (freqs >= 3000) & (freqs <= 6000)
+    low_mask = (freqs >= 125) & (freqs < 500)       # Low Freq
+    mid_mask = (freqs >= 500) & (freqs < 3000)      # Mid Freq
+    high_mask = (freqs >= 3000) & (freqs <= 6000)   # High Freq
 
     low_energy = stft[low_mask].mean() if np.any(low_mask) else 0.0
     mid_energy = stft[mid_mask].mean() if np.any(mid_mask) else 0.0
@@ -30,14 +31,14 @@ def extract_features_from_chunk(y, sr):
     total = low_energy + mid_energy + high_energy + 1e-8
 
     return {
-        "rms": float(rms),
-        "centroid": float(centroid),
-        "zcr": float(zcr),
-        "rolloff": float(rolloff),
-        "band_low": float(low_energy / total),
-        "band_mid": float(mid_energy / total),
-        "band_high": float(high_energy / total)
-    }
+        RMS: float(rms),
+        CENTROID: float(centroid),
+        ZCR: float(zcr),
+        ROLLOFF: float(rolloff),
+        FREQ_L: float(low_energy / total),
+        FREQ_M: float(mid_energy / total),
+        FREQ_H: float(high_energy / total)
+}
 
 
 def extract_features_from_file(path, start_sec=0, duration_sec=1.0):

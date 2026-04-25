@@ -1,20 +1,12 @@
 import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
 import { mapMicLog, mapSPL, mapWavLevel } from './axis.js';
+import { stopMicrophone } from './micEngine.js';
+import { stopWavPlayback } from './wavEngine.js';
 
 let audioCtx = null;
 let analyser = null;
-let micSource = null;
 let dataArray = null;
-let streamRef = null;
 let micLine = null;
-
-let wavBuffer = null;
-let wavSource = null;
-let wavFileName = '';
-let wavStartTime = 0;
-let wavOffset = 0;
-let wavPlaying = false;
-let wavDuration = 0;
 
 const FFT_SIZE = 32768;
 const MIC_OFFSET = 113.6;
@@ -29,7 +21,7 @@ const SPL_MAX = 135;
 // =========================
 // Audio context / analyser
 // =========================
-function ensureAudioEngine() {
+export function ensureAudioEngine() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -43,130 +35,32 @@ function ensureAudioEngine() {
 
         dataArray = new Float32Array(analyser.frequencyBinCount);
     }
+
+    return { audioCtx, analyser, dataArray };
 }
 
-// =========================
-// Microphone init
-// =========================
-export async function initMicrophone() {
-    if (micSource) {
-        return;
-    }
-
-    ensureAudioEngine();
-
-    const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false
-        }
-    });
-
-    streamRef = stream;
-    micSource = audioCtx.createMediaStreamSource(stream);
-    micSource.connect(analyser);
+export function getAudioContext() {
+    return audioCtx;
 }
 
-// =========================
-// WAV load / play
-// =========================
-export async function loadWavFile(file) {
-    if (!file) {
-        return;
-    }
-
-    ensureAudioEngine();
-
-    const arrayBuffer = await file.arrayBuffer();
-    wavBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-
-    wavFileName = file.name;
-    wavDuration = wavBuffer.duration;
-    wavOffset = 0;
-    wavPlaying = false;
-
-    if (wavSource) {
-        wavSource.disconnect();
-        wavSource = null;
-    }
+export function getAnalyser() {
+    return analyser;
 }
 
-export async function playWavFile() {
-    if (!audioCtx || !wavBuffer || !analyser) {
-        return false;
-    }
-
-    if (audioCtx.state === 'suspended') {
-        await audioCtx.resume();
-    }
-
-    if (wavSource) {
-        wavSource.disconnect();
-        wavSource = null;
-    }
-
-    wavSource = audioCtx.createBufferSource();
-    wavSource.buffer = wavBuffer;
-    wavSource.connect(analyser);
-    analyser.connect(audioCtx.destination);
-
-    wavStartTime = audioCtx.currentTime - wavOffset;
-    wavPlaying = true;
-
-    wavSource.onended = () => {
-        if (wavPlaying) {
-            wavPlaying = false;
-            wavOffset = 0;
-            wavSource = null;
-        }
-    };
-
-    wavSource.start(0, wavOffset);
-
-    return true;
+export function getDataArray() {
+    return dataArray;
 }
 
-export function stopWavFile() {
-if (!audioCtx) {
-        return;
+export function closeAudioEngine() {
+    if (audioCtx) {
+        audioCtx.close();
     }
 
-    if (wavPlaying) {
-        wavOffset = audioCtx.currentTime - wavStartTime;
-    }
-
-    if (wavSource) {
-        wavSource.onended = null;
-        wavSource.stop();
-        wavSource.disconnect();
-        wavSource = null;
-    }
-
-    wavPlaying = false;
+    audioCtx = null;
+    analyser = null;
+    dataArray = null;
 }
 
-export function getWavInfo() {
-    return {
-        fileName: wavFileName,
-        duration: wavDuration,
-        currentTime: getCurrentPlaybackTime(),
-        isPlaying: wavPlaying
-    };
-}
-
-function getCurrentPlaybackTime() {
-    if (!audioCtx || !wavPlaying) {
-        return wavOffset;
-    }
-
-    if (wavPlaying) {
-        const currentTime = audioCtx.currentTime - wavStartTime;
-        return Math.min(currentTime, wavDuration);
-    }
-
-    return wavOffset;
-}
 
 // =========================
 // Mic line
@@ -249,47 +143,16 @@ export function updateAudioLine(scene, mode = 'realtime') {
     }
 }
 
-// =========================
-// Stop microphone
-// =========================
-export function stopMicrophone() {
-    if (streamRef) {
-        streamRef.getTracks().forEach(track => track.stop());
-        streamRef = null;
-    }
-
-    if (micSource) {
-        micSource.disconnect();
-        micSource = null;
-    }
-}
 
 // =========================
 // Stop wav playback
 // =========================
-export function stopWavPlayback() {
-    if (wavSource) {
-        wavSource.stop();
-        wavSource.disconnect();
-        wavSource = null;
-    }
-
-    wavPlaying = false;
-}
 
 export function stopAllAudio() {
     stopMicrophone();
     stopWavPlayback();
-
-    if (audioCtx) {
-        audioCtx.close();
-    }
-
-    audioCtx = null;
-    analyser = null;
-    dataArray = null;
+    closeAudioEngine();
 }
-
 
 // =========================
 // Alert on the WAV panel

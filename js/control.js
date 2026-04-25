@@ -10,7 +10,6 @@ export function setupControls({
     onWavStop
 }) {
     const earControls = document.getElementById('ear-controls');
-    //const controls = document.getElementById('controls');
     const wavControls = document.getElementById('wav-controls');
 
     const btnLeft = document.getElementById('btnLeft');
@@ -19,12 +18,12 @@ export function setupControls({
     const btnMic = document.getElementById('btnMic');
 
     const btnLoadWav = document.getElementById('btnLoadWav');
-    const btnPlayWav = document.getElementById('btnPlayWav');
-    const btnStopWav = document.getElementById('btnStopWav');
+    const btnWavToggle = document.getElementById('btnWavToggle');
     const wavInput = document.getElementById('wavInput');
     const wavFileName = document.getElementById('wavFileName');
     const wavTime = document.getElementById('wavTime');
-
+    const wavAlert = document.getElementById('wavAlert');
+    
     const btnAudiogram = document.getElementById('btnAudiogram');
     const btnRealtime = document.getElementById('btnRealtime');
     const btnWav = document.getElementById('btnWav');
@@ -91,9 +90,9 @@ export function setupControls({
         }
     }
 
-    function setWavActive(state) {
-        btnPlayWav.classList.toggle('active', state === 'play');
-        btnStopWav.classList.toggle('active', state === 'stop');
+    function setWavActive(isPlaying) {
+        btnWavToggle.classList.toggle('active', isPlaying);
+        btnWavToggle.textContent = isPlaying ? 'Pause WAV' : 'Play WAV';
     }
 
     function setMicActive(enabled) {
@@ -108,10 +107,10 @@ export function setupControls({
         btnMic.style.display = showMic ? '' : 'none';
 
         btnLoadWav.style.display = showWav ? '' : 'none';
-        btnPlayWav.style.display = showWav ? '' : 'none';
-        btnStopWav.style.display = showWav ? '' : 'none';
+        btnWavToggle.style.display = showWav ? '' : 'none';
         wavFileName.style.display = showWav ? '' : 'none';
         wavTime.style.display = showWav ? '' : 'none';
+        wavAlert.style.display = showWav ? '' : 'none';
 
         earControls.style.display = mode === 'integration' ? 'none' : '';
         wavControls.style.display = mode === 'integration' ? 'none' : '';
@@ -123,7 +122,7 @@ export function setupControls({
 
 
     // =========================
-    // Event helpers
+    // Handle Mode / Event
     // =========================
 
     function handleModeClick(mode) {
@@ -179,6 +178,7 @@ export function setupControls({
     // =========================
     // WAV buttons
     // =========================
+    let wavPlaying = false;
 
     btnLoadWav.addEventListener('click', () => {
         wavInput.click();
@@ -186,21 +186,28 @@ export function setupControls({
 
     wavInput.addEventListener('change', async (event) => {
         await onWavLoad(event);
-        setWavActive('stop');
+
+        wavPlaying = false;
+        setWavActive(false);
     });
 
-    btnPlayWav.addEventListener('click', async () => {
-        const started = await onWavPlay();
+    btnWavToggle.addEventListener('click', async () => {
+        if (!wavPlaying) {
+            const started = await onWavPlay();
 
-        if (started) {
-            setWavActive('play');
+            if (started) {
+                wavPlaying = true;
+                setWavActive(true);
+            }
+
+            return;
         }
-    });
 
-    btnStopWav.addEventListener('click', async () => {
         await onWavStop();
-        setWavActive('stop');
+        wavPlaying = false;
+        setWavActive(false);
     });
+    
 
 
     // =========================
@@ -211,7 +218,7 @@ export function setupControls({
     setEarActive(initialEar);
     setMicActive(initialMicEnabled);
     setModeControlsVisible(initialMode);
-    setWavActive('stop');
+    setWavActive(false);
 
     requestAnimationFrame(placeControls);
 

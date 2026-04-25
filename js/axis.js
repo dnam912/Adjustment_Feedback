@@ -8,9 +8,6 @@ const GRAPH_X_MAX = 100;
 const GRAPH_Y_MIN = -100;
 const GRAPH_Y_MAX = 100;
 
-const AUDIOGRAM_FREQ_MIN = 125;
-const AUDIOGRAM_FREQ_MAX = 8000;
-
 const MIC_FREQ_MIN = 125;
 const MIC_FREQ_MAX = 6000;
 
@@ -39,10 +36,19 @@ const splRefs = {
 };
 
 let staticObjects = [];
+const axisLabels = document.getElementById('axis-labels');
+
 
 // =========================
-// Frequency ticks
+// Get Functions
 // =========================
+function getRects(renderer) {
+    return {
+        canvasRect: renderer.domElement.getBoundingClientRect(),
+        containerRect: axisLabels.getBoundingClientRect()
+    };
+}
+
 function getFreqTicks(mode) {
     if (mode === 'audiogram') {
         return AUDIOGRAM_FREQ_TICKS;
@@ -221,26 +227,8 @@ export function mapWavLevel(level, minLevel = -100, maxLevel = 0) {
 // =========================
 // Axis labels
 // =========================
-/*function screenX(graphX, renderer) {
-    const rect = renderer.domElement.getBoundingClientRect();
-    const aspect = rect.width / rect.height;
-
-    return window.scrollX + rect.left
-        + (graphX + 125 * aspect) / (250 * aspect) * rect.width;
-}
-
-function screenY(graphY, renderer) {
-    const rect = renderer.domElement.getBoundingClientRect();
-
-    return window.scrollY + rect.top
-        + (125 - graphY) / 250 * rect.height;
-}*/
-
 function screenX(graphX, renderer) {
-    const canvasRect = renderer.domElement.getBoundingClientRect();
-    const container = document.getElementById('axis-labels');
-    const containerRect = container.getBoundingClientRect();
-
+    const { canvasRect, containerRect } = getRects(renderer);
     const aspect = canvasRect.width / canvasRect.height;
 
     return (canvasRect.left - containerRect.left)
@@ -248,10 +236,8 @@ function screenX(graphX, renderer) {
 }
 
 function screenY(graphY, renderer) {
-    const canvasRect = renderer.domElement.getBoundingClientRect();
-    const container = document.getElementById('axis-labels');
-    const containerRect = container.getBoundingClientRect();
-
+    const { canvasRect, containerRect } = getRects(renderer);
+    
     return (canvasRect.top - containerRect.top)
         + (125 - graphY) / 250 * canvasRect.height;
 }
