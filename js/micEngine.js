@@ -5,7 +5,7 @@ let streamRef = null;
 
 
 // =========================
-// Microphone init
+// Init Microphone
 // =========================
 export async function initMicrophone() {
     if (micSource) {
@@ -25,6 +25,7 @@ export async function initMicrophone() {
     streamRef = stream;
     micSource = audioCtx.createMediaStreamSource(stream);
     micSource.connect(analyser);
+    console.log('Mic connected to analyser');
 }
 
 

@@ -1,24 +1,25 @@
-const warningSound = new Audio('./sound/warning.mp3');
-const dangerSound = new Audio('./sound/danger.mp3');
-
-
-[warningSound, dangerSound].forEach(sound => {
-    sound.preload = 'auto';
-    sound.loop = true;
-    sound.volume = 1.0;
-});
-
+let audioCtx = null;
+let warningBuffer = null;
+let dangerBuffer = null;
+let currentSource = null;
 let hapticTimer = null;
-let currentSound = null;
+
+let hapticReadyPromise = null;
+let hapticEnabled = false;
 
 
 // =========================
-// Init device
+// Init Haptic
 // =========================
+async function loadSound(url) {
+    const response = await fetch(url);
+    const arrayBuffer = await response.arrayBuffer();
+    return await audioCtx.decodeAudioData(arrayBuffer);
+}
+
 export async function initHapticOutput() {
-    if (!warningSound.setSinkId || !dangerSound.setSinkId) {
-        console.warn('setSinkId is not supported.');
-        return;
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -26,9 +27,6 @@ export async function initHapticOutput() {
 
     const devices = await navigator.mediaDevices.enumerateDevices();
     const outputs = devices.filter(device => device.kind === 'audiooutput');
-
-    console.log('Audio outputs:', outputs);
-
 
     /* AUDIO OUTPUTS - Media Device Info
         0: Speaker (Default)
@@ -39,15 +37,33 @@ export async function initHapticOutput() {
         device.label.includes('Woojer Strap Edge')
     );
 
-    if (!woojer) {
+    if (woojer && audioCtx.setSinkId) {
+        await audioCtx.setSinkId(woojer.deviceId);
+        hapticEnabled = true;
+        console.log('Haptic output fixed to:', woojer.label);
+    } else {
+        hapticEnabled = false;
         console.warn('Woojer output not found.');
-        return;
     }
 
-    await warningSound.setSinkId(woojer.deviceId);
-    await dangerSound.setSinkId(woojer.deviceId);
+    console.log('Loading haptic sounds...');
+    warningBuffer = await loadSound('./sound/warning.mp3');
+    console.log('Warning sound loaded');
 
-    console.log('Haptic output set to:', woojer.label);
+    dangerBuffer = await loadSound('./sound/danger.wav');
+    console.log('Danger sound loaded');
+}
+
+export function prepareHapticOutput() {
+    if (!hapticReadyPromise) {
+        hapticReadyPromise = initHapticOutput().catch(error => {
+            hapticReadyPromise = null;
+            console.warn('Haptic init failed:', error);
+            throw error;
+        });
+    }
+
+    return hapticReadyPromise;
 }
 
 
@@ -55,32 +71,51 @@ export async function initHapticOutput() {
 // Play warning / danger
 // =========================
 export function playHapticAlert(level) {
+    if (!hapticEnabled) {
+        return;
+    }
+
+    if (!audioCtx || !warningBuffer || !dangerBuffer) {
+        console.warn('Haptic audio is not ready.');
+        return;
+    }
+
     if (hapticTimer) {
         clearTimeout(hapticTimer);
         hapticTimer = null;
     }
 
-    if (currentSound) {
-        currentSound.pause();
-        currentSound.currentTime = 0;
+    if (currentSource) {
+        try {
+            currentSource.stop();
+        } catch (error) {
+            console.warn('Previous haptic source already stopped.');
+        }
+
+        currentSource = null;
     }
 
-    currentSound =
-        level === 'danger'
-            ? dangerSound
-            : warningSound;
+    const source = audioCtx.createBufferSource();
+    source.buffer = level === 'danger' ? dangerBuffer : warningBuffer;
+    source.loop = true;
+    source.connect(audioCtx.destination);
 
-    currentSound.play().catch(error => {
-        console.warn('Haptic playback failed:', error);
-    });
+    source.start(0);
+    currentSource = source;
 
-    const duration =
-        level === 'danger' ? 1800 : 1200;
+    const duration = level === 'danger' ? 1000 : 1200;
 
     hapticTimer = setTimeout(() => {
-        currentSound.pause();
-        currentSound.currentTime = 0;
-        currentSound = null;
+        if (currentSource) {
+            try {
+                currentSource.stop();
+            } catch (error) {
+                console.warn('Haptic source already stopped.');
+            }
+
+            currentSource = null;
+        }
+
         hapticTimer = null;
     }, duration);
 }

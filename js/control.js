@@ -7,7 +7,15 @@ export function setupControls({
     onMicToggle,
     onWavLoad,
     onWavPlay,
-    onWavStop
+    onWavStop,
+
+    // =========================
+    // Experiment button
+    // =========================
+    onMarkWarning,
+    onMarkDanger,
+    onStartTrial,
+    onExportTrial
 }) {
     const earControls = document.getElementById('ear-controls');
     const wavControls = document.getElementById('wav-controls');
@@ -23,16 +31,33 @@ export function setupControls({
     const wavFileName = document.getElementById('wavFileName');
     const wavTime = document.getElementById('wavTime');
     const wavAlert = document.getElementById('wavAlert');
-
+    
     const btnAudiogram = document.getElementById('btnAudiogram');
     const btnRealtime = document.getElementById('btnRealtime');
     const btnWav = document.getElementById('btnWav');
     const btnIntegration = document.getElementById('btnIntegration');
 
+    // =========================
+    // Experiment button
+    // =========================
+    const experimentToggleWrap = document.getElementById('experimentToggleWrap');
+    const experimentToggle = document.getElementById('experimentToggle');
+    const experimentPanel = document.getElementById('experiment-panel');
+
+    const participantName = document.getElementById('participantName');
+    const participantId = document.getElementById('participantId');
+    const trialNumber = document.getElementById('trialNumber');
+    const trialCondition = document.getElementById('trialCondition');
+
+    const btnStartTrial = document.getElementById('btnStartTrial');
+    const btnMarkWarning = document.getElementById('btnMarkWarning');
+    const btnMarkDanger = document.getElementById('btnMarkDanger');
+    const btnExportTrial = document.getElementById('btnExportTrial');
+
     const modeButtons = {
         audiogram: btnAudiogram,
         realtime: btnRealtime,
-        wav: btnWav
+        wav: btnWav,
         // integration: btnIntegration
     };
 
@@ -115,6 +140,19 @@ export function setupControls({
         earControls.style.display = mode === 'integration' ? 'none' : '';
         wavControls.style.display = mode === 'integration' ? 'none' : '';
 
+        // =========================
+        // Experiment button
+        // =========================
+        experimentToggleWrap.style.display = showWav ? '' : 'none';
+        if (!showWav) {
+            wavAlert.textContent = '';
+            wavAlert.style.display = 'none';
+
+            experimentToggle.checked = false;
+            experimentPanel.classList.remove('active');
+            experimentPanel.classList.add('hidden');
+        }
+
         btnLeft.classList.toggle('locked', showWav);
         btnRight.classList.toggle('locked', showWav);
         btnBoth.classList.toggle('locked', showWav);
@@ -141,7 +179,7 @@ export function setupControls({
         if (currentVisibleMode === 'wav' || currentVisibleMode === 'integration') {
             return;
         }
-
+        
         setEarActive(ear);
         onEarChange(ear);
 
@@ -170,8 +208,14 @@ export function setupControls({
     // =========================
 
     btnMic.addEventListener('click', async () => {
-        const enabled = await onMicToggle();
-        setMicActive(enabled);
+        try {
+            const enabled = await onMicToggle();
+            setMicActive(enabled);
+        } catch (error) {
+            console.warn('Microphone permission failed:', error);
+            setMicActive(false);
+            alert('Microphone access was blocked. Check Chrome site permissions.');
+        }
     });
 
 
@@ -208,12 +252,52 @@ export function setupControls({
         setWavActive(false);
     });
 
+    // =========================
+    // Experiment button
+    // =========================
+    experimentToggle.addEventListener('change', () => {
+        experimentPanel.classList.toggle('active', experimentToggle.checked);
+        experimentPanel.classList.toggle('hidden', !experimentToggle.checked);
+
+        requestAnimationFrame(placeControls);
+    });
+
+    function getTrialMeta() {
+        return {
+            name: participantName.value,
+            id: participantId.value,
+            trial: trialNumber.value,
+            condition: trialCondition.value
+            };
+    }
+    btnStartTrial.addEventListener('click', async () => {
+        const started = await onStartTrial(getTrialMeta());
+
+        if (started) {
+            wavPlaying = true;
+            setWavActive(true);
+        }
+    });
+
+    btnMarkWarning.addEventListener('click', () => {
+        onMarkWarning(getTrialMeta());
+    });
+
+    btnMarkDanger.addEventListener('click', () => {
+        onMarkDanger(getTrialMeta());
+    });
+
+    btnExportTrial.addEventListener('click', (event) => {
+        event.preventDefault();
+        console.log('Export button clicked');
+        onExportTrial();
+    });
+        
 
 
     // =========================
     // Initial UI state
     // =========================
-
     setModeActive(initialMode);
     setEarActive(initialEar);
     setMicActive(initialMicEnabled);

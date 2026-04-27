@@ -1,93 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adjustment Feedback</title>
+    <link rel="stylesheet" href="./script.css">
+</head>
+<body>
+    <h1>Hearing Readiness Monitor</h1>
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Adjustment Feedback</title>
-        <link rel="stylesheet" href="./script.css">
-    </head>
+    <div id="graph-page">
+        <div id="axis-labels"></div>
 
-    <body>
-        <h1>Hearing Readiness Monitor</h1>
+        <div id="btn-panel">
+            <div id="ear-controls">
+                <button id="btnLeft">Left</button>
+                <button id="btnRight">Right</button>
+                <button id="btnBoth" class="active">Both</button>
+                <button id="btnMic" style="display: none">Real-time Mic</button>
+            </div>
 
-        <div id="graph-page">
-            <div id="axis-labels"></div>
-
-            <div id="btn-panel">
-                <div id="ear-controls">
-                    <button id="btnLeft">Left</button>
-                    <button id="btnRight">Right</button>
-                    <button id="btnBoth" class="active">Both</button>
-                    <button id="btnMic" style="display: none">Real-time Mic</button>
-                </div>
-
-                <div id="wav-controls">
+            <div id="wav-controls">
+                <div id="wav-main-row">
                     <button id="btnLoadWav" style="display: none">Load WAV</button>
                     <button id="btnWavToggle" style="display: none">Play WAV</button>
-
+                
                     <span id="wavFileName" style="display: none">No file</span>
                     <span id="wavTime" style="display: none">0.00 / 0.00</span>
                     <span id="wavAlert" style="display: none">No alert</span>
-
-                    <input type="file" id="wavInput" accept=".wav" hidden>
                 </div>
+
+                <label id="experimentToggleWrap" style="display: none">
+                        <input type="checkbox" id="experimentToggle">
+                            Experiment mode
+                    </label>
+
+                <div id="experiment-panel" class="hidden">
+                    <div id="trial-info-row">
+                        <input id="participantName" placeholder="Name">
+                        <input id="participantId" placeholder="ID">
+                        <input id="trialNumber" type="number" value="1" min="0" placeholder="Trial #" title="Trial Number" >
+
+                        <select id="trialCondition">
+                            <option value="visual">Visual only</option>
+                            <option value="haptic">Haptic belt</option>
+                        </select>
+                    </div>
+
+                    <div id="trial-action-row">
+                        <button id="btnMarkWarning">Mark Warning</button>
+                        <button id="btnMarkDanger">Mark Danger</button>
+                    </div>
+
+                    <div id="trial-export-row">
+                        <button type="button" id="btnStartTrial" class="mini-btn">
+                            Start Trial</button>
+                        <button type="button" id="btnExportTrial" class="mini-btn">
+                            Export CSV</button>
+                    </div>
+                </div>
+
+                <input type="file" id="wavInput" accept=".wav" hidden>
             </div>
         </div>
+    </div>
 
-        <div id="integration-panel" style="display:none;">
-            <!-- <iframe
-            id="integration-frame"
-            src="/integration"
-            style="width:100%; border:none; background:#fff;">
+    <div id="integration-panel" style="display:none;">
+        <!-- <iframe id="integration-frame"
+         src="/integration" style="width:100%;
+         border:none; background:#fff;">
         </iframe> -->
-        </div>
-        <!--"http://127.0.0.1:3000/"-->
+    </div>
+    <!--"http://127.0.0.1:3000/"-->
 
-        <div id="feature-panel" style="display:none;">
-            <h3>Live Audio Features</h3>
-            <div>RMS: <span id="feat-rms">-</span></div>
-            <div>Centroid: <span id="feat-centroid">-</span></div>
-            <div>ZCR: <span id="feat-zcr">-</span></div>
-            <div>Rolloff: <span id="feat-rolloff">-</span></div>
-            <div>Low Band: <span id="feat-low">-</span></div>
-            <div>Mid Band: <span id="feat-mid">-</span></div>
-            <div>High Band: <span id="feat-high">-</span></div>
-        </div>
+    <div id="feature-panel" style="display:none;">
+        <h3>Live Audio Features</h3>
+        <div>RMS: <span id="feat-rms">-</span></div>
+        <div>Centroid: <span id="feat-centroid">-</span></div>
+        <div>ZCR: <span id="feat-zcr">-</span></div>
+        <div>Rolloff: <span id="feat-rolloff">-</span></div>
+        <div>Low Band: <span id="feat-low">-</span></div>
+        <div>Mid Band: <span id="feat-mid">-</span></div>
+        <div>High Band: <span id="feat-high">-</span></div>
+    </div>
+    
 
+    <div id="controls">
+        <button id="btnAudiogram" class="active">Audiogram</button>
+        <button id="btnRealtime">Acoustic Monitor</button>
+        <button id="btnWav">WAV Player</button>
+        <a href="/integration" id="btnIntegration">Data Integration</a>
+    </div>
 
-        <div id="controls">
-            <button id="btnAudiogram" class="active">Audiogram</button>
-            <button id="btnRealtime">Acoustic Monitor</button>
-            <button id="btnWav">WAV Player</button>
-            <a href="/integration" id="btnIntegration">Data Integration</a>
-        </div>
-
-        <div id="legend">
-            <div id="leg-audiogram">
-                <div class="leg-item"><span class="leg-swatch" style="background:#1a6ab0"></span> Left ear (dB HL)</div>
-                <div class="leg-item"><span class="leg-swatch" style="background:#aa2222"></span> Right ear (dB HL)
-                </div>
-            </div>
-
-            <div id="leg-realtime" style="display:none">
-                <div class="leg-item"><span class="leg-swatch" style="background:#1a6ab0"></span> Mod Output L (dB SPL)
-                </div>
-                <div class="leg-item"><span class="leg-swatch" style="background:#aa2222"></span> Mod Output R (dB SPL)
-                </div>
-                <div class="leg-item"><span class="leg-swatch dashed" style="color:#0a2a4a"></span> MPO L (dB SPL)</div>
-                <div class="leg-item"><span class="leg-swatch dashed" style="color:#440a0a"></span> MPO R (dB SPL)</div>
-                <div class="leg-item"><span class="leg-swatch dashed" style="color:#2277bb"></span> Threshold L (dB SPL)
-                </div>
-                <div class="leg-item"><span class="leg-swatch dashed" style="color:#bb3333"></span> Threshold R (dB SPL)
-                </div>
-                <div class="leg-item"><span class="leg-swatch" style="background:#0055ff"></span> Mic (real-time)</div>
-            </div>
-            <!--<input type="file" accept=".json" onchange="loadPatientData(event)">-->
+    <div id="legend">
+        <div id="leg-audiogram">
+            <div class="leg-item"><span class="leg-swatch"
+                style="background:#1a6ab0"></span> Left ear (dB HL)</div>
+            <div class="leg-item"><span class="leg-swatch"
+                style="background:#aa2222"></span> Right ear (dB HL)</div>
         </div>
 
-        <script type="module" src="./js/main.js"></script>
+        <div id="leg-realtime" style="display:none">
+            <div class="leg-item"><span class="leg-swatch" style="background:#1a6ab0"></span> Mod Output L (dB SPL)</div>
+            <div class="leg-item"><span class="leg-swatch" style="background:#aa2222"></span> Mod Output R (dB SPL)</div>
+            <div class="leg-item"><span class="leg-swatch dashed" style="color:#0a2a4a"></span> MPO L (dB SPL)</div>
+            <div class="leg-item"><span class="leg-swatch dashed" style="color:#440a0a"></span> MPO R (dB SPL)</div>
+            <div class="leg-item"><span class="leg-swatch dashed" style="color:#2277bb"></span> Threshold L (dB SPL)</div>
+            <div class="leg-item"><span class="leg-swatch dashed" style="color:#bb3333"></span> Threshold R (dB SPL)</div>
+            <div class="leg-item"><span class="leg-swatch" style="background:#0055ff"></span> Mic (real-time)</div>
+        </div>
+        <!--<input type="file" accept=".json" onchange="loadPatientData(event)">-->
+    </div>
 
-    </body>
-
+    <script type="module" src="./js/main.js"></script>
+    
+</body>
 </html>

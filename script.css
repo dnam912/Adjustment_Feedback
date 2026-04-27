@@ -6,7 +6,7 @@
 
 body {
   background: #F5F5F5;
-  font-family: 'Courier New', monospace;
+  font-family: 'Courier New', monospace; 
   overflow-x: hidden;
   overflow-y: auto;
 
@@ -15,7 +15,7 @@ body {
 }
 
 h1 {
-  position: fixed;
+  position: fixed; 
   top: 16px;
   left: 20px;
   z-index: 100;
@@ -32,7 +32,6 @@ h1 {
   pointer-events: none;
   z-index: 5;
 }
-
 .axis-tick {
   position: absolute;
   color: #222;
@@ -40,11 +39,9 @@ h1 {
   font-size: 11px;
   white-space: nowrap;
 }
-
 .x-tick {
   transform: translateX(-50%);
 }
-
 .y-tick {
   transform: translateY(-50%);
 }
@@ -59,13 +56,15 @@ a#btnIntegration {
   cursor: pointer;
   font-family: 'Courier New', monospace;
 }
-
 a#btnIntegration {
   text-decoration: none;
+  color: inherit;
 }
 
 #btn-panel button.active,
-#controls button.active {
+#controls button.active,
+#btnMarkWarning:active,
+#btnMarkDanger:active {
   background: #9e6e5e;
   color: #fff;
 }
@@ -105,7 +104,6 @@ a#btnIntegration {
   padding-top: 5%;
   box-sizing: border-box;
 }
-
 #integration-frame {
   display: block;
   width: 100%;
@@ -123,7 +121,7 @@ a#btnIntegration {
   position: fixed;
   right: 16px;
   bottom: 200px;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255,255,255,0.95);
   border: 1px solid #ddd;
   padding: 12px 16px;
   font-size: 12px;
@@ -139,24 +137,70 @@ a#btnIntegration {
   pointer-events: none;
   z-index: 20;
 }
-
-#btn-panel>div {
+#btn-panel > div {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   gap: 10px;
   z-index: 20;
-
+  
   pointer-events: auto;
 }
+
+#wav-controls {
+  flex-direction: column;
+  align-items: center;
+}
+#wav-main-row {
+  gap: 10px;
+  margin-top: 10px;
+  align-items: center;
+}
+#experiment-toggle-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+#experiment-panel {
+  margin-top: 10px;
+}
+#experiment-panel.active {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+#experiment-panel.hidden {
+  display: none;
+}
+#trial-info-row,
+#trial-action-row,
+#trial-export-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 15px;
+}
+.mini-btn {
+  padding: 6px 10px !important;
+  font-size: 11px;
+  min-height: 30px;
+  border: 1px solid #888 !important;
+  background: #f3f3f3 !important;
+  color: #222;
+}
+.mini-btn:hover {
+  background: #e8e8e8 !important;
+}
+
 
 /* LEGEND */
 #legend {
   position: fixed;
   top: 10%;
   right: 16px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255,255,255,0.92);
   border: 1px solid #e0e0e0;
   padding: 12px 16px;
   font-family: 'Courier New', monospace;
@@ -165,24 +209,23 @@ a#btnIntegration {
   pointer-events: none;
   z-index: 10;
 }
-
 .leg-item {
   display: flex;
   align-items: center;
   gap: 8px;
   color: #333;
 }
-
 .leg-swatch {
   width: 24px;
   height: 2px;
   display: inline-block;
 }
-
 .leg-swatch.dashed {
-  background: repeating-linear-gradient(90deg,
-      currentColor 0,
-      currentColor 4px,
-      transparent 4px,
-      transparent 7px);
+  background: repeating-linear-gradient(
+    90deg,
+    currentColor 0,
+    currentColor 4px,
+    transparent 4px,
+    transparent 7px
+  );
 }

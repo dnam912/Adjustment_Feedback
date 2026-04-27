@@ -6,8 +6,10 @@ import { ensureMicLine, updateAudioLine, hideMicLine,
 import { initMicrophone, stopMicrophone } from './micEngine.js';
 import { loadWavFile, playWavFile, stopWavFile, getWavInfo } from './wavEngine.js';
 import { computeLiveWavScore, updateWavAlert } from './wavAlert.js';
-import { initHapticOutput } from './hapticEngine.js';
+import { prepareHapticOutput } from './hapticEngine.js';
 import { updateLegend, updateWavDisplay, updateFeaturePanel } from './interface.js';
+import { recordTrialResponse, recordAlertEvent,
+        startTrial, exportTrialCSV } from './experiment.js';
 
 
 // =========================
@@ -139,7 +141,8 @@ async function handleWavPlay() {
         alert('Turn off Mic first before playing a WAV file.');
         return false;
     }
-
+    
+    await prepareHapticOutput();
     const started = await playWavFile();
 
     if (started) {
@@ -170,17 +173,53 @@ setupControls({
     initialMode: currentMode,
     initialEar: currentEar,
     initialMicEnabled: micEnabled,
+
     onModeChange: renderMode,
     onEarChange: renderEar,
     onMicToggle: handleMicToggle,
     onWavLoad: handleWavLoad,
     onWavPlay: handleWavPlay,
-    onWavStop: handleWavStop
+    onWavStop: handleWavStop,
+
+    onStartTrial: async meta => {
+        if (micEnabled) {
+            alert('Turn off Mic first before starting trial.');
+            return;
+        }
+
+        await prepareHapticOutput();
+        const started = await startTrial({
+            meta,
+            playWavFile,
+            stopWavFile,
+            getWavInfo,
+            refreshView,
+            updateWavDisplay,
+            updateWavAlert,
+            currentMode
+        });
+
+        if (started) {
+            currentMode = 'wav';
+            return true;
+        }
+        return false;
+    },
+
+    onMarkWarning: meta => {
+        recordTrialResponse('warning', meta, getWavInfo);
+    },
+
+    onMarkDanger: meta => {
+        recordTrialResponse('danger', meta, getWavInfo);
+    },
+
+    onExportTrial: exportTrialCSV
 });
 window.addEventListener('resize', () => {
     refreshView();
 });
-initHapticOutput();
+//prepareHapticOutput();
 
 
 // =========================
@@ -212,7 +251,7 @@ function animateAudio() {
             console.log('feature:', feature);
             console.log('score:', score);
 
-            updateWavAlert(currentMode, { score: score });
+            updateWavAlert(currentMode, { score: score }, getWavInfo);
         } else {
             updateWavAlert(currentMode, null);
         }

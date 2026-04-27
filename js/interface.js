@@ -1,3 +1,11 @@
+function formatTime(seconds) {
+    const total = Math.floor(seconds);
+    const min = Math.floor(total / 60);
+    const sec = total % 60;
+
+    return min + ':' + String(sec).padStart(2, '0');
+}
+
 export function updateLegend(currentMode, isAudioMode) {
     const audiogramLegend = document.getElementById('leg-audiogram');
     const realtimeLegend = document.getElementById('leg-realtime');
@@ -24,7 +32,7 @@ export function updateWavDisplay(getWavInfo) {
 
     wavFileName.textContent = wavInfo.fileName ? wavInfo.fileName : 'No file';
     wavTime.textContent =
-        wavInfo.currentTime.toFixed(2) + ' / ' + wavInfo.duration.toFixed(2);
+        formatTime(wavInfo.currentTime) + ' / ' + formatTime(wavInfo.duration);
 }
 
 export function updateFeaturePanel(currentMode, feature) {
