@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <!-- <link href="css/create.css" rel="stylesheet"> -->
+        <script src="./js/setToday.js" type="js"></script>
+    </head>
+
+    <body class="bg-light">
+        <div class="container mt-4">
+
+            <h1 class="mb-4">Create Item</h1>
+            <form method="POST" action="/events/create">
+                <div class="mb-3">
+                    <label class="form-label" for="date_added">Date Added</label>
+                    <input type="datetime-local" class="form-control" name="date_added" id="date_added"
+                        value="<%= new Date().toISOString().slice(0, new Date().toISOString().lastIndexOf(':')) %>">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="volume">Volume</label>
+                    <input class="form-control" type="number" name="volume">
+                </div>
+
+                <div class="mb-3">
+                    <label for="frequency">Frequency</label>
+                    <div class="container mb-3" name="frequency" id="frequency">
+                        <div class="row">
+                            <div class="input-group col">
+                                <span class="input-group-text" for="l_frequency">Low</span>
+                                <input class="form-control" type="number" name="l_frequency" id="l_frequency">
+                            </div>
+                            <div class="input-group col">
+                                <span class="input-group-text" for="m_frequency">Med</span>
+                                <input class="form-control" type="number" name="m_frequency" id="m_frequency">
+                            </div>
+                            <div class="input-group col">
+                                <span class="input-group-text" for="h_frequency">High</span>
+                                <input class="form-control" type="number" name="h_frequency" id="h_frequency">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="container mb-3" id="painDull" name="painDull">
+                        <div class="row">
+                            <div class="col col-6" id="pain">
+                                <label for="pain">Pain</label>
+                                <div class="form-check form-check-inline" style="width: auto;">
+                                    <div class="rangeLabel" style="display:flex; width: 100%; align-items: center;">
+                                        <div style="width: 33%; text-align: left;">0</div>
+                                        <div style="width: 33%; text-align: center;">1</div>
+                                        <div style="width: 33%; text-align: right;">2</div>
+                                    </div>
+                                    <input class="form-control" type="range" name="pain" id="pain" min="0" max="2"
+                                        step="1" value="0">
+                                </div>
+                            </div>
+                            <div class="col col-6" id="dull">
+                                <label for="dull">Dullness</label>
+                                <div class="form-check-inline">
+                                    <div class="rangeLabel" style="display:flex; width: 100%; align-items: center;">
+                                        <div style="width: 33%; text-align: left;">0</div>
+                                        <div style="width: 33%; text-align: center;">1</div>
+                                        <div style="width: 33%; text-align: right;">2</div>
+                                    </div>
+                                    <input class="form-control" type="range" name="dull" id="dull" min="0" max="2"
+                                        step="1" value="0">
+                                </div>
+
+                                <!-- <div class="form-check-inline">
+                                    <input class="form-check-input" type="radio" name="dull" id="dull1" value="1">
+                                    <label class="form-check-label" for="dull1">1</label>
+                                </div>
+                                <div class="form-check-inline">
+                                    <input class="form-check-input" type="radio" name="dull" id="dull2" value="2">
+                                    <label class="form-check-label" for="dull2">2</label>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" for="env_tags">Env. Tags</span>
+                        <input class="form-control" type="text" name="env_tags" id="env_tags">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text" for="env_dB">Env. dB level</span>
+                        <input class="form-control" type="number" name="env_dB" id="env_dB">
+                    </div>
+
+                    <button class="btn btn-success" type="submit">
+                        <span class="material-icons align-middle">check</span>
+                        Create
+                    </button>
+
+                    <a class="btn btn-secondary" href="/">Cancel</a>
+            </form>
+        </div>
+    </body>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+
+</html>

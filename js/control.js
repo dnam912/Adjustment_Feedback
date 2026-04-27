@@ -23,7 +23,7 @@ export function setupControls({
     const wavFileName = document.getElementById('wavFileName');
     const wavTime = document.getElementById('wavTime');
     const wavAlert = document.getElementById('wavAlert');
-    
+
     const btnAudiogram = document.getElementById('btnAudiogram');
     const btnRealtime = document.getElementById('btnRealtime');
     const btnWav = document.getElementById('btnWav');
@@ -32,8 +32,8 @@ export function setupControls({
     const modeButtons = {
         audiogram: btnAudiogram,
         realtime: btnRealtime,
-        wav: btnWav,
-        integration: btnIntegration
+        wav: btnWav
+        // integration: btnIntegration
     };
 
     const earButtons = {
@@ -141,7 +141,7 @@ export function setupControls({
         if (currentVisibleMode === 'wav' || currentVisibleMode === 'integration') {
             return;
         }
-        
+
         setEarActive(ear);
         onEarChange(ear);
 
@@ -207,7 +207,7 @@ export function setupControls({
         wavPlaying = false;
         setWavActive(false);
     });
-    
+
 
 
     // =========================

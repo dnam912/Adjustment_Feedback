@@ -1,0 +1,10 @@
+/* 
+    laz r
+    02-26-2026 11:57
+    create.css
+*/
+
+div#frequency {
+    display: flex;
+    flex-direction: row;
+}
