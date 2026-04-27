@@ -1,2 +1,11 @@
+# Dependency
 node_modules/
-package-lock.json
+
+# Security
+.env
+*.pem
+*.key
+
+# Operating System
+.DS_Store
+Thumbs.db
