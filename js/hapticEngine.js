@@ -100,12 +100,12 @@ function applyHapticSettings(level, source) {
     }
 
     // 'Warning'
-    hapticGain.gain.value = 5.0;
+    hapticGain.gain.value = 3.0;
     hapticFilter.frequency.value = 500;
-    hapticFilter.Q.value = 0.5;
+    //hapticFilter.Q.value = 0.5;
     source.playbackRate.value = 0.5;
 
-    return 800; // duraation
+    return 650; // duraation
 }
 
 // =========================
