@@ -4,7 +4,8 @@ import { setupControls } from './control.js';
 import { ensureMicLine, updateAudioLine, hideMicLine,
         getCurrentAudioFeature } from './audioEngine.js';
 import { initMicrophone, stopMicrophone } from './micEngine.js';
-import { loadWavFile, playWavFile, stopWavFile, getWavInfo } from './wavEngine.js';
+import { loadWavFile, setWavOutputDevice, 
+        playWavFile, stopWavFile, getWavInfo } from './wavEngine.js';
 import { computeLiveWavScore, updateWavAlert } from './wavAlert.js';
 import { prepareHapticOutput } from './hapticEngine.js';
 import { updateLegend, updateWavDisplay, updateFeaturePanel } from './interface.js';
@@ -143,6 +144,8 @@ async function handleWavPlay() {
     }
     
     await prepareHapticOutput();
+    await setWavOutputDevice();
+
     const started = await playWavFile();
 
     if (started) {
@@ -188,6 +191,8 @@ setupControls({
         }
 
         await prepareHapticOutput();
+        await setWavOutputDevice();
+        
         const started = await startTrial({
             meta,
             playWavFile,

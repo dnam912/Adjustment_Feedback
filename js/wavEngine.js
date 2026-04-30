@@ -34,6 +34,33 @@ export async function loadWavFile(file) {
     }
 }
 
+export async function setWavOutputDevice() {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const outputs = devices.filter(device => device.kind === 'audiooutput');
+
+    const target =
+        outputs.find(d => d.label.includes('Bose')) ||
+        outputs.find(d => d.label.includes('AirPods')) ||
+        outputs.find(d =>
+            d.deviceId !== 'default' &&
+            !d.label.includes('Woojer') &&
+            !d.label.includes('MacBook')
+        ) ||
+        outputs.find(d => d.label.includes('MacBook'));
+
+    if (!target) {
+        console.warn('No WAV output device found.');
+        return;
+    }
+
+    const { audioCtx } = ensureAudioEngine();
+
+    if (audioCtx.setSinkId) {
+        await audioCtx.setSinkId(target.deviceId);
+        console.log('WAV output set to:', target.label);
+    }
+}
+
 export async function playWavFile() {
     const { audioCtx, analyser } = ensureAudioEngine();
 

@@ -7,20 +7,46 @@ let hapticTimer = null;
 let hapticReadyPromise = null;
 let hapticEnabled = false;
 
+let hapticGain = null;
+let hapticFilter = null;
+
 
 // =========================
 // Init Haptic
 // =========================
 async function loadSound(url) {
     const response = await fetch(url);
+     if (!response.ok) {
+        throw new Error(`Failed to load sound: ${url}`);
+    }
+    
     const arrayBuffer = await response.arrayBuffer();
     return await audioCtx.decodeAudioData(arrayBuffer);
+}
+
+function findWoojerOutput(outputs) {
+    return outputs.find(device =>
+        device.deviceId !== 'default' &&
+        device.label.includes('Woojer Strap Edge')
+    );
 }
 
 export async function initHapticOutput() {
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        hapticGain = audioCtx.createGain();
+        hapticGain.gain.value = 5.0;
+        
+        hapticFilter = audioCtx.createBiquadFilter();
+        hapticFilter.type = 'lowpass';
+        hapticFilter.frequency.value = 180;
+        hapticFilter.Q.value = 0.8;
+
+        hapticFilter.connect(hapticGain);
+        hapticGain.connect(audioCtx.destination);
     }
+    
 
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     stream.getTracks().forEach(track => track.stop());
@@ -32,10 +58,7 @@ export async function initHapticOutput() {
         0: Speaker (Default)
         1: Woojer Strap Belt
     */
-    const woojer = outputs.find(device =>
-        device.deviceId !== 'default' &&
-        device.label.includes('Woojer Strap Edge')
-    );
+    const woojer = findWoojerOutput(outputs);
 
     if (woojer && audioCtx.setSinkId) {
         await audioCtx.setSinkId(woojer.deviceId);
@@ -50,7 +73,7 @@ export async function initHapticOutput() {
     warningBuffer = await loadSound('./sound/warning.mp3');
     console.log('Warning sound loaded');
 
-    dangerBuffer = await loadSound('./sound/danger.wav');
+    dangerBuffer = await loadSound('./sound/fronbondi.mp3');
     console.log('Danger sound loaded');
 }
 
@@ -66,12 +89,33 @@ export function prepareHapticOutput() {
     return hapticReadyPromise;
 }
 
+function applyHapticSettings(level, source) {
+    if (level === 'danger') {
+        hapticGain.gain.value = 200.0; // Volume
+        hapticFilter.frequency.value = 100; // frequency band
+        hapticFilter.Q.value = 3.0; // sharpness
+        source.playbackRate.value = 10.0; // playspeed
+
+        return 2000; // duration
+    }
+
+    // 'Warning'
+    hapticGain.gain.value = 5.0;
+    hapticFilter.frequency.value = 500;
+    hapticFilter.Q.value = 0.5;
+    source.playbackRate.value = 0.5;
+
+    return 800; // duraation
+}
 
 // =========================
 // Play warning / danger
 // =========================
 export function playHapticAlert(level) {
+    console.log('PLAY HAPTIC CALLED:', level);
+
     if (!hapticEnabled) {
+        console.warn('Haptic disabled');
         return;
     }
 
@@ -98,12 +142,13 @@ export function playHapticAlert(level) {
     const source = audioCtx.createBufferSource();
     source.buffer = level === 'danger' ? dangerBuffer : warningBuffer;
     source.loop = true;
-    source.connect(audioCtx.destination);
 
+    const duration = applyHapticSettings(level, source);
+
+    //source.connect(audioCtx.destination);
+    source.connect(hapticFilter);
     source.start(0);
     currentSource = source;
-
-    const duration = level === 'danger' ? 1000 : 1200;
 
     hapticTimer = setTimeout(() => {
         if (currentSource) {
